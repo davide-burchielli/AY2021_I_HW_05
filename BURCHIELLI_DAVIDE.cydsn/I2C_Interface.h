@@ -87,9 +87,9 @@
     */
     uint8_t I2C_Peripheral_IsDeviceConnected(uint8_t device_address);
     
-    ErrorCode WriteRegister(uint8_t, uint8_t);
+    ErrorCode WriteRegister(uint8_t RegisterAddress, uint8_t RegisterValue);
     
-
-    
+    ErrorCode error;
+    char message[50] = {'\0'};
 #endif // I2C_Interface_H
 /* [] END OF FILE */

@@ -8,7 +8,7 @@
 #include "Interrupt_Routines.h"
 #include "I2C_Interface.h"
 #include "stdio.h"
-#include "CTR_REG1_DRIVER.h"
+#include "CTRL_REG1_DRIVER.h"
 
 
 #define SENSITIVITY_G 1  // Sensitivity in mg/digit 
@@ -78,13 +78,13 @@
     #define STATUS_REG 0x27 // Address of the Status Register
     // Check the ZYXDA bit to see if new X,Y,Z values are available
 
-    ErrorCode error = 0;
+    
 
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
     
-    char message[50] = {'\0'};
+
     
     I2C_Peripheral_Start();
     UART_Debug_Start();
@@ -110,11 +110,11 @@ int main(void)
         {
             UART_Debug_PutString("Error occurred during I2C comm to set control register 1\r\n");   
         }
-    }
+    
     
 // CONTROL REGISTER 4:
     
-    //UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
+    UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
     error = WriteRegister(LIS3DH_CTRL_REG4, LIS3DH_CTRL_REG4_VALUE);
 
     if (error == NO_ERROR)
@@ -126,26 +126,25 @@ int main(void)
         {
             UART_Debug_PutString("Error occurred during I2C comm to set control register 4\r\n");   
         }
-    }
+    
 
     // READ the internal EEPROM StartUp register 
     uint8_t eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
-    UpdateCTRL_REG1(eeprom_value, ctrl_reg1);
     
+    UpdateCTRL_REG1(eeprom_value);
+   
+    
+    
+    SearchCount (eeprom_value);
 
-    
-    
-    
-    
-    
-    
     isr_BUTTON_StartEx(Custom_BUTTON_ISR); //Start the ISR of the button
     
     for(;;)
     {
-        /* Place your application code here. */
+        
     }
 }
+
 
 ErrorCode WriteRegister (uint8_t RegisterAddress, uint8_t RegisterValue)
     {
