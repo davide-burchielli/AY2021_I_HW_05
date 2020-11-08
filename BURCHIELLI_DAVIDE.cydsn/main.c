@@ -8,11 +8,15 @@
 #include "Interrupt_Routines.h"
 #include "I2C_Interface.h"
 #include "stdio.h"
+#include "CTR_REG1_DRIVER.h"
+
 
 #define SENSITIVITY_G 1  // Sensitivity in mg/digit 
 #define SENSITIVITY_MS2 SENSITIVITY_G * 0.00981  // Sensitivity in m/s^2
 
 #define LIS3DH_DEVICE_ADDRESS 0x18  // 7-bit I2C address of the slave device.
+
+#define EEPROM_STARTUP_REGISTER 0x00 // Define the Startup register address
 
 
     /******************************************/
@@ -28,9 +32,11 @@
     /*
         ODR3 | ODR2 | ODR1 | ODR0 | LPen | Zen | Yen | Xen
     
-          0     0      0      0      0      1     1     1
+          0     0      0      1      0      1     1     1
     
-        ODR[3:0] = Data rate selection; default set to 0 and their values are changed at the Start and everytime Custom_BUTTON_ISR is called.
+        ODR[3:0] = Data rate selection; 
+                   ODR[3:1] set to 0 and ODR0 set to 0 to have a data rate of 1 Hz at the Start.
+                   NOTE: their values are changed at the Start and everytime Custom_BUTTON_ISR is called.
         LPen  = Low-power mode enable set to 0 for HIGH RESOLUTION MODE
         Zen, Yen, Xen = Z, Y and X axes enable; all set to 1.
 
@@ -72,7 +78,8 @@
     #define STATUS_REG 0x27 // Address of the Status Register
     // Check the ZYXDA bit to see if new X,Y,Z values are available
 
-    
+    ErrorCode error = 0;
+
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -81,6 +88,7 @@ int main(void)
     
     I2C_Peripheral_Start();
     UART_Debug_Start();
+    EEPROM_Start();
     
     CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
 
@@ -90,24 +98,12 @@ int main(void)
     
 // CONTROL REGISTER 1:
     
-    uint8_t ctrl_reg1; 
-    ErrorCode error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
-                                        LIS3DH_CTRL_REG1,
-                                        &ctrl_reg1);
-        
     UART_Debug_PutString("\r\nWriting CONTROL REGISTER 1:..\r\n");
-    
-    if (ctrl_reg1 != LIS3DH_CTRL_REG1_VALUE)
-    {
-        ctrl_reg1 = LIS3DH_CTRL_REG1_VALUE;
-    
-        error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
-                                             LIS3DH_CTRL_REG1,
-                                             ctrl_reg1);
-    
-        if (error == NO_ERROR)
+    error = WriteRegister(LIS3DH_CTRL_REG1, LIS3DH_CTRL_REG1_VALUE);
+
+    if (error == NO_ERROR)
         {
-            sprintf(message, "CONTROL REGISTER 1 successfully written as: 0x%02X\r\n", ctrl_reg1);
+            sprintf(message, "CONTROL REGISTER 1 successfully written as: 0x%02X\r\n", LIS3DH_CTRL_REG1_VALUE);
             UART_Debug_PutString(message); 
         }
         else
@@ -118,32 +114,30 @@ int main(void)
     
 // CONTROL REGISTER 4:
     
-    uint8_t ctrl_reg4; 
-    error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
-                                        LIS3DH_CTRL_REG4,
-                                        &ctrl_reg4);
-        
-    UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
-    
-    if (ctrl_reg4 != LIS3DH_CTRL_REG4_VALUE)
-    {
-        ctrl_reg4 = LIS3DH_CTRL_REG4_VALUE;
-    
-        error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
-                                             LIS3DH_CTRL_REG4,
-                                             ctrl_reg4);
-    
-        if (error == NO_ERROR)
+    //UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
+    error = WriteRegister(LIS3DH_CTRL_REG4, LIS3DH_CTRL_REG4_VALUE);
+
+    if (error == NO_ERROR)
         {
-            sprintf(message, "CONTROL REGISTER 4 successfully written as: 0x%02X\r\n", ctrl_reg4);
+            sprintf(message, "CONTROL REGISTER 4 successfully written as: 0x%02X\r\n", LIS3DH_CTRL_REG4_VALUE);
             UART_Debug_PutString(message); 
         }
         else
         {
-            UART_Debug_PutString("Error occurred during I2C comm to set control register 1\r\n");   
+            UART_Debug_PutString("Error occurred during I2C comm to set control register 4\r\n");   
         }
     }
 
+    // READ the internal EEPROM StartUp register 
+    uint8_t eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
+    UpdateCTRL_REG1(eeprom_value, ctrl_reg1);
+    
+
+    
+    
+    
+    
+    
     
     isr_BUTTON_StartEx(Custom_BUTTON_ISR); //Start the ISR of the button
     
@@ -153,4 +147,19 @@ int main(void)
     }
 }
 
+ErrorCode WriteRegister (uint8_t RegisterAddress, uint8_t RegisterValue)
+    {
+        uint8_t reg; 
+        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
+                                                      RegisterAddress,
+                                                      &reg);
+        if (reg != RegisterValue)
+        {
+            reg = RegisterValue;
+            error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
+                                                 RegisterAddress,
+                                                 reg);
+        }
+        return error ? ERROR : NO_ERROR;
+    }
 /* [] END OF FILE */
