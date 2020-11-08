@@ -39,8 +39,8 @@
     }
 
     ErrorCode I2C_Peripheral_ReadRegister(uint8_t device_address, 
-                                            uint8_t register_address,
-                                            uint8_t* data)
+                                          uint8_t register_address,
+                                          uint8_t* data)
     {
         // Send start condition
         uint8_t error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
@@ -66,9 +66,9 @@
     }
     
     ErrorCode I2C_Peripheral_ReadRegisterMulti(uint8_t device_address,
-                                                uint8_t register_address,
-                                                uint8_t register_count,
-                                                uint8_t* data)
+                                               uint8_t register_address,
+                                               uint8_t register_count,
+                                               uint8_t* data)
     {
         // Send start condition
         uint8_t error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
@@ -87,8 +87,7 @@
                     uint8_t counter = register_count;
                     while(counter>1)
                     {
-                        data[register_count-counter] =
-                            I2C_Master_MasterReadByte(I2C_Master_ACK_DATA);
+                        data[register_count-counter] = I2C_Master_MasterReadByte(I2C_Master_ACK_DATA);
                         counter--;
                     }
                     // Read last data without acknowledgement
@@ -125,44 +124,7 @@
         return error ? ERROR : NO_ERROR;
     }
     
-    ErrorCode I2C_Peripheral_WriteRegisterMulti(uint8_t device_address,
-                                            uint8_t register_address,
-                                            uint8_t register_count,
-                                            uint8_t* data)
-    {
-        // Send start condition
-        uint8_t error = I2C_Master_MasterSendStart(device_address, I2C_Master_WRITE_XFER_MODE);
-        if (error == I2C_Master_MSTR_NO_ERROR)
-        {
-            // Write address of register to be written with the MSB equal to 1
-            register_address |= 0x80; // Datasheet indication for multi write -- autoincrement
-            error = I2C_Master_MasterWriteByte(register_address);
-            if (error == I2C_Master_MSTR_NO_ERROR)
-            {
-                // Continue writing until we have data to write
-                uint8_t counter = register_count;
-                while(counter > 0)
-                {
-                     error =
-                        I2C_Master_MasterWriteByte(data[register_count-counter]);
-                    if (error != I2C_Master_MSTR_NO_ERROR)
-                    {
-                        // Send stop condition
-                        I2C_Master_MasterSendStop();
-                        // Return error code
-                        return ERROR;
-                    }
-                    counter--;
-                }
-            }
-        }
-        // Send stop condition in case something didn't work out correctly
-        I2C_Master_MasterSendStop();
-        // Return error code
-        return error ? ERROR : NO_ERROR;
-    }
-    
-    
+
     uint8_t I2C_Peripheral_IsDeviceConnected(uint8_t device_address)
     {
         // Send a start condition followed by a stop condition
