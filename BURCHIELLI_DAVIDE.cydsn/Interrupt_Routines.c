@@ -6,7 +6,7 @@
  * =========================================================================================
 */
 #include "Interrupt_Routines.h"
-#include "CTRL_REG1_DRIVER.h"
+#include "REG_DRIVER.h"
 #include "I2C_Interface.h"
 
 #define LIS3DH_CTRL_REG1 

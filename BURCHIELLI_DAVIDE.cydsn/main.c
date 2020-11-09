@@ -8,11 +8,9 @@
 #include "Interrupt_Routines.h"
 #include "I2C_Interface.h"
 #include "stdio.h"
-#include "CTRL_REG1_DRIVER.h"
+#include "REG_DRIVER.h"
+#include "Acceleration_Struct.h"
 
-
-#define SENSITIVITY_G 1  // Sensitivity in mg/digit 
-#define SENSITIVITY_MS2 SENSITIVITY_G * 0.00981  // Sensitivity in m/s^2
 
 #define LIS3DH_DEVICE_ADDRESS 0x18  // 7-bit I2C address of the slave device.
 
@@ -76,9 +74,8 @@
 // STATUS REGISTER
 
     #define STATUS_REG 0x27 // Address of the Status Register
-    // Check the ZYXDA bit to see if new X,Y,Z values are available
-
-    
+   
+    #define STATUS_REG_ZYXDA_MASK 0x08  // Mask to check if the ZYXDA bit is = 1   
 
 int main(void)
 {
@@ -89,6 +86,13 @@ int main(void)
     I2C_Peripheral_Start();
     UART_Debug_Start();
     EEPROM_Start();
+    
+    uint8_t AccelerationValues [6];
+    AccelerationStruct AccDataConverted;
+    
+    DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first array element
+    DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last array element
+    
     
     CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
 
@@ -141,24 +145,48 @@ int main(void)
     
     for(;;)
     {
+        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
+                                            STATUS_REG,
+                                            &reg_value);
+        if (error == NO_ERROR)
+        {
+            if ((reg_value & STATUS_REG_ZYXDA_MASK) != 0)
+            {
+                error = I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
+                                                         OUT_X_L,
+                                                         6,
+                                                         AccelerationValues);                
+            
+                if (error == NO_ERROR)
+                {
+                    AccDataConverted.x = Convert (AccelerationValues[0], AccelerationValues[1]);
+                    DataBuffer[1] = (uint8_t)(AccDataConverted.x & 0xFF);
+                    DataBuffer[2] = (uint8_t)(AccDataConverted.x >> 8);                    
+                    
+                    AccDataConverted.y = Convert (AccelerationValues[2], AccelerationValues[3]);
+                    DataBuffer[3] = (uint8_t)(AccDataConverted.y & 0xFF);
+                    DataBuffer[4] = (uint8_t)(AccDataConverted.y >> 8);     
+                    
+                    AccDataConverted.z = Convert (AccelerationValues[4], AccelerationValues[5]);
+                    DataBuffer[5] = (uint8_t)(AccDataConverted.z & 0xFF);
+                    DataBuffer[6] = (uint8_t)(AccDataConverted.z >> 8);  
+                    
+                    UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
+                }
+              else
+                {
+                    UART_Debug_PutString("Error occurred during I2C comm to read OUTPUT REGISTERS\r\n");   
+                }                
+                
+            }
+        }
+        else
+        {
+            UART_Debug_PutString("Error occurred during I2C comm to read Status Register\r\n");   
+        }
+        
         
     }
 }
 
-
-ErrorCode WriteRegister (uint8_t RegisterAddress, uint8_t RegisterValue)
-    {
-        uint8_t reg; 
-        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
-                                                      RegisterAddress,
-                                                      &reg);
-        if (reg != RegisterValue)
-        {
-            reg = RegisterValue;
-            error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS,
-                                                 RegisterAddress,
-                                                 reg);
-        }
-        return error ? ERROR : NO_ERROR;
-    }
 /* [] END OF FILE */
