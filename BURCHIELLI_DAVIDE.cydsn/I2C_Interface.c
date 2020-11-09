@@ -43,7 +43,7 @@
                                           uint8_t* data)
     {
         // Send start condition
-        uint8_t error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
+        error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
         if (error == I2C_Master_MSTR_NO_ERROR)
         {
             // Write address of register to be read
@@ -71,7 +71,7 @@
                                                uint8_t* data)
     {
         // Send start condition
-        uint8_t error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
+        error = I2C_Master_MasterSendStart(device_address,I2C_Master_WRITE_XFER_MODE);
         if (error == I2C_Master_MSTR_NO_ERROR)
         {
             // Write address of register to be read with the MSb equal to 1
@@ -107,7 +107,7 @@
                                             uint8_t data)
     {
         // Send start condition
-        uint8_t error = I2C_Master_MasterSendStart(device_address, I2C_Master_WRITE_XFER_MODE);
+        error = I2C_Master_MasterSendStart(device_address, I2C_Master_WRITE_XFER_MODE);
         if (error == I2C_Master_MSTR_NO_ERROR)
         {
             // Write register address
@@ -128,7 +128,7 @@
     uint8_t I2C_Peripheral_IsDeviceConnected(uint8_t device_address)
     {
         // Send a start condition followed by a stop condition
-        uint8_t error = I2C_Master_MasterSendStart(device_address, I2C_Master_WRITE_XFER_MODE);
+        error = I2C_Master_MasterSendStart(device_address, I2C_Master_WRITE_XFER_MODE);
         I2C_Master_MasterSendStop();
         // If no error generated during stop, device is connected
         if (error == I2C_Master_MSTR_NO_ERROR)

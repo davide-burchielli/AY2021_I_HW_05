@@ -2,8 +2,8 @@
 
  * ========================================
 */
-#ifndef _REG_DRIVER
-    #define _REG_DRIVER
+#ifndef _REG_DRIVER_H
+    #define _REG_DRIVER_H
     
     #include "project.h"
     #include "ErrorCodes.h"
@@ -14,25 +14,18 @@
                                                    // It identifies the dimention of the array DataBuffer.
 
     
-    uint8_t DataRateArray [DataRateArray_LENGTH] = {
-                                                        0x10, // 0 0 0 1  0 0 0 0 --> 1 Hz
-                                                        0x20, // 0 0 1 0  0 0 0 0 --> 10 Hz                                  
-                                                        0x30, // 0 0 1 1  0 0 0 0 --> 25 Hz            
-                                                        0x40, // 0 1 0 0  0 0 0 0 --> 50 Hz    
-                                                        0x50, // 0 1 0 1  0 0 0 0 --> 100 Hz
-                                                        0x60, // 0 1 1 0  0 0 0 0 --> 200 Hz
-                                                    };
-    
+   
+    void SearchCount (uint8_t eeprom_value);    
     void UpdateCTRL_REG1(uint8_t DataRateToUpdate);
-    void SearchCount (uint8_t eeprom_value);
-    ErrorCode WriteRegister (uint8_t RegisterAddress, uint8_t RegisterValue);
+
+    ErrorCode SetRegister (uint8_t RegisterAddress, uint8_t RegisterValue);
     int16 Convert (uint8_t AccValue_L, uint8_t AccValue_H);
     
-    uint8_t count = 0; 
+    uint8_t count; 
     uint8_t reg_value;
     int16 OutAcc;
-    int16 MultiplierFactor = 1000;
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];  // DataBuffer array contains the bytes to send.
+    
     
 #endif
 

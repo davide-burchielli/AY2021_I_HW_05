@@ -19,9 +19,10 @@
     #define __ERRORCODES_H
     
     typedef enum {
-        NO_ERROR,           ///< No error generated
-        ERROR               ///< Error generated
-    } ErrorCode;
+                    NO_ERROR,           ///< No error generated
+                    ERROR               ///< Error generated
+                 } ErrorCode;
+    ErrorCode error;
 
 #endif
 /* [] END OF FILE */

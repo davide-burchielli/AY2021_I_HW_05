@@ -7,12 +7,13 @@
 */
 #include "Interrupt_Routines.h"
 #include "REG_DRIVER.h"
-#include "I2C_Interface.h"
+
 
 #define LIS3DH_CTRL_REG1 
 #define EEPROM_STARTUP_REGISTER 0x00 // Define the Startup register address
 #define DataRateArray_LENGTH 6
 
+extern uint8_t DataRateArray [DataRateArray_LENGTH];
 // Define Custom_BUTTON_ISR
 CY_ISR (Custom_BUTTON_ISR)
 {

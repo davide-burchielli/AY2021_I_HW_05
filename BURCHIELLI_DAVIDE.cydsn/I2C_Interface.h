@@ -74,10 +74,10 @@
     *   \param data Array of data to be written
     */
     ErrorCode I2C_Peripheral_WriteRegisterMulti(uint8_t device_address,
-                                            uint8_t register_address,
-                                            uint8_t register_count,
-                                            uint8_t* data);
-    
+                                                uint8_t register_address,
+                                                uint8_t register_count,
+                                                uint8_t* data);
+        
     /**
     *   \brief Check if device is connected over I2C.
     *
@@ -86,10 +86,6 @@
     *   \retval Returns true (>0) if device is connected.
     */
     uint8_t I2C_Peripheral_IsDeviceConnected(uint8_t device_address);
-    
-    ErrorCode WriteRegister(uint8_t RegisterAddress, uint8_t RegisterValue);
-    
-    ErrorCode error;
-    char message[50] = {'\0'};
+     
 #endif // I2C_Interface_H
 /* [] END OF FILE */

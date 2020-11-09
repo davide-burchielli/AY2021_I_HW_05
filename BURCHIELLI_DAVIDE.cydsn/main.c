@@ -5,9 +5,10 @@
  * ========================================
 */
 #include "project.h"
+#include "stdio.h"
+
 #include "Interrupt_Routines.h"
 #include "I2C_Interface.h"
-#include "stdio.h"
 #include "REG_DRIVER.h"
 #include "Acceleration_Struct.h"
 
@@ -80,19 +81,17 @@
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
-    
-
-    
+       
     I2C_Peripheral_Start();
     UART_Debug_Start();
     EEPROM_Start();
     
     uint8_t AccelerationValues [6];
     AccelerationStruct AccDataConverted;
+    char message[20] = {'\0'};
     
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last array element
-    
     
     CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
 
@@ -103,7 +102,7 @@ int main(void)
 // CONTROL REGISTER 1:
     
     UART_Debug_PutString("\r\nWriting CONTROL REGISTER 1:..\r\n");
-    error = WriteRegister(LIS3DH_CTRL_REG1, LIS3DH_CTRL_REG1_VALUE);
+    error = SetRegister(LIS3DH_CTRL_REG1, LIS3DH_CTRL_REG1_VALUE);
 
     if (error == NO_ERROR)
         {
@@ -119,7 +118,7 @@ int main(void)
 // CONTROL REGISTER 4:
     
     UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
-    error = WriteRegister(LIS3DH_CTRL_REG4, LIS3DH_CTRL_REG4_VALUE);
+    error = SetRegister(LIS3DH_CTRL_REG4, LIS3DH_CTRL_REG4_VALUE);
 
     if (error == NO_ERROR)
         {
@@ -184,7 +183,6 @@ int main(void)
         {
             UART_Debug_PutString("Error occurred during I2C comm to read Status Register\r\n");   
         }
-        
         
     }
 }
