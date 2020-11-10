@@ -21,7 +21,7 @@
                                                         0x50, // 0 1 0 1  0 0 0 0 --> 100 Hz
                                                         0x60, // 0 1 1 0  0 0 0 0 --> 200 Hz
                                                     };
-    char messag[20];
+    char messag[50]= {'\0'};
 
 void SearchCount (uint8_t eeprom_value)
     {

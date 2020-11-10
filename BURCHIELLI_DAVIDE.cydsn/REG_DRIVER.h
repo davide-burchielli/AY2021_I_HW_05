@@ -25,7 +25,7 @@
     uint8_t reg_value;
     int16 OutAcc;
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];  // DataBuffer array contains the bytes to send.
-    
+    _Bool ButtonFlag;
     
 #endif
 

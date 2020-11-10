@@ -88,12 +88,14 @@ int main(void)
     
     uint8_t AccelerationValues [6];
     AccelerationStruct AccDataConverted;
-    char message[20] = {'\0'};
-    
+    char message[50] = {'\0'};
+    extern uint8_t DataRateArray [DataRateArray_LENGTH];
+    count = 0;
+  
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last array element
     
-    CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
+    //CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
 
     /******************************************/
     /*            I2C Writing                 */
@@ -136,14 +138,29 @@ int main(void)
     
     UpdateCTRL_REG1(eeprom_value);
    
-    
-    
     SearchCount (eeprom_value);
 
     isr_BUTTON_StartEx(Custom_BUTTON_ISR); //Start the ISR of the button
     
     for(;;)
     {
+        if (ButtonFlag)
+        {
+            UpdateCTRL_REG1( DataRateArray[count]);
+            if (error == NO_ERROR)
+                {
+                    UART_Debug_PutString("DATARATE UPDATING DONE\r\n");
+                    EEPROM_UpdateTemperature();
+                    EEPROM_WriteByte(DataRateArray[count], EEPROM_STARTUP_REGISTER);                     
+                }
+                else
+                {
+                    UART_Debug_PutString("Error occurred during I2C comm to update DataRate\r\n");   
+            }    
+
+            ButtonFlag = 0;
+        }
+        
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
                                             STATUS_REG,
                                             &reg_value);
@@ -170,7 +187,7 @@ int main(void)
                     DataBuffer[5] = (uint8_t)(AccDataConverted.z & 0xFF);
                     DataBuffer[6] = (uint8_t)(AccDataConverted.z >> 8);  
                     
-                    UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
+                   UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
                 }
               else
                 {
