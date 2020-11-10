@@ -19,13 +19,14 @@
     void UpdateCTRL_REG1(uint8_t DataRateToUpdate);
 
     ErrorCode SetRegister (uint8_t RegisterAddress, uint8_t RegisterValue);
-    int16 Convert (uint8_t AccValue_L, uint8_t AccValue_H);
+    void ConvertAcc (uint8_t*);
     
     uint8_t count; 
     uint8_t reg_value;
+    float OutAccconv;
     int16 OutAcc;
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];  // DataBuffer array contains the bytes to send.
-    _Bool ButtonFlag;
+    volatile _Bool ButtonFlag;
     
 #endif
 

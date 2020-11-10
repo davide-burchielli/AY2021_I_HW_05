@@ -17,9 +17,7 @@
 // Define Custom_BUTTON_ISR
 CY_ISR (Custom_BUTTON_ISR)
 {
-    count = (count + 1) % DataRateArray_LENGTH;
-    
+    count = (count + 1) % DataRateArray_LENGTH;  
     ButtonFlag = 1;
-   
 }
 /* [] END OF FILE */

@@ -10,7 +10,7 @@
 #include "Interrupt_Routines.h"
 #include "I2C_Interface.h"
 #include "REG_DRIVER.h"
-#include "Acceleration_Struct.h"
+
 
 
 #define LIS3DH_DEVICE_ADDRESS 0x18  // 7-bit I2C address of the slave device.
@@ -87,7 +87,6 @@ int main(void)
     EEPROM_Start();
     
     uint8_t AccelerationValues [6];
-    AccelerationStruct AccDataConverted;
     char message[50] = {'\0'};
     extern uint8_t DataRateArray [DataRateArray_LENGTH];
     count = 0;
@@ -95,7 +94,6 @@ int main(void)
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last array element
     
-    //CyDelay(5); //"The boot procedure is complete about 5 milliseconds after device power-up."
 
     /******************************************/
     /*            I2C Writing                 */
@@ -133,9 +131,9 @@ int main(void)
         }
     
 
-    // READ the internal EEPROM StartUp register 
+// READ the internal EEPROM StartUp register 
+        
     uint8_t eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
-    
     UpdateCTRL_REG1(eeprom_value);
    
     SearchCount (eeprom_value);
@@ -147,11 +145,24 @@ int main(void)
         if (ButtonFlag)
         {
             UpdateCTRL_REG1( DataRateArray[count]);
+ 
             if (error == NO_ERROR)
                 {
-                    UART_Debug_PutString("DATARATE UPDATING DONE\r\n");
                     EEPROM_UpdateTemperature();
-                    EEPROM_WriteByte(DataRateArray[count], EEPROM_STARTUP_REGISTER);                     
+                    EEPROM_WriteByte(0x00, EEPROM_STARTUP_REGISTER); 
+                    /*
+                    uint8_t check = 3;
+                    
+                    sprintf(message, "\nCHECK : %u ", check);
+		            UART_Debug_PutString(message);           
+                    
+                    if (check == CYRET_SUCCESS)
+                        UART_Debug_PutString("write");
+                        else UART_Debug_PutString("NOT write");
+                   */ eeprom_value=EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
+                     sprintf(message, "\nEEPROM DOPO : %x ", eeprom_value);
+		            UART_Debug_PutString(message);
+                   
                 }
                 else
                 {
@@ -160,6 +171,7 @@ int main(void)
 
             ButtonFlag = 0;
         }
+        
         
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
                                             STATUS_REG,
@@ -175,19 +187,8 @@ int main(void)
             
                 if (error == NO_ERROR)
                 {
-                    AccDataConverted.x = Convert (AccelerationValues[0], AccelerationValues[1]);
-                    DataBuffer[1] = (uint8_t)(AccDataConverted.x & 0xFF);
-                    DataBuffer[2] = (uint8_t)(AccDataConverted.x >> 8);                    
-                    
-                    AccDataConverted.y = Convert (AccelerationValues[2], AccelerationValues[3]);
-                    DataBuffer[3] = (uint8_t)(AccDataConverted.y & 0xFF);
-                    DataBuffer[4] = (uint8_t)(AccDataConverted.y >> 8);     
-                    
-                    AccDataConverted.z = Convert (AccelerationValues[4], AccelerationValues[5]);
-                    DataBuffer[5] = (uint8_t)(AccDataConverted.z & 0xFF);
-                    DataBuffer[6] = (uint8_t)(AccDataConverted.z >> 8);  
-                    
-                   UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
+                 ConvertAcc(AccelerationValues);
+                 UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
                 }
               else
                 {
