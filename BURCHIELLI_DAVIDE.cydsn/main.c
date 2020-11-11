@@ -12,10 +12,9 @@
 #include "REG_DRIVER.h"
 
 
-
 #define LIS3DH_DEVICE_ADDRESS 0x18  // 7-bit I2C address of the slave device.
 
-#define EEPROM_STARTUP_REGISTER 0x00 // Define the Startup register address
+#define EEPROM_STARTUP_REGISTER 0x0000 // Define the Startup register address
 
 
     /******************************************/
@@ -63,14 +62,7 @@
 
 // AXES OUTPUT REGISTERS
 
-    #define OUT_X_L 0x28 // Address of the X-axis LSB Output Register
-    #define OUT_X_H 0x29 // Address of the X-axis HSB Output Register
-   
-    #define OUT_Y_L 0x2A // Address of the Y-axis LSB Output Register
-    #define OUT_Y_H 0x2B // Address of the Y-axis HSB Output Register 
-
-    #define OUT_Z_L 0x2C // Address of the Z-axis LSB Output Register
-    #define OUT_Z_H 0x2D // Address of the Z-axis HSB Output Register     
+    #define OUT_X_L 0x28 // Address of the X-axis LSB Output Register  
     
 // STATUS REGISTER
 
@@ -85,11 +77,14 @@ int main(void)
     I2C_Peripheral_Start();
     UART_Debug_Start();
     EEPROM_Start();
+   
     
     uint8_t AccelerationValues [6];
-    char message[50] = {'\0'};
+    char message[20] = {'\0'};
     extern uint8_t DataRateArray [DataRateArray_LENGTH];
     count = 0;
+    reg_value=0;
+    eeprom_value = 0;
   
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last array element
@@ -133,24 +128,47 @@ int main(void)
 
 // READ the internal EEPROM StartUp register 
         
-    uint8_t eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
-    UpdateCTRL_REG1(eeprom_value);
-   
+    eeprom_value = EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
+    //CyDelay(10);
+   // UpdateCTRL_REG1(eeprom_value);
+    
+    sprintf(message, "\n EEPROM START UP : %x ", eeprom_value);
+	UART_Debug_PutString(message);    
+    
+    /*
+    EEPROM_UpdateTemperature();
+    if (EEPROM_WriteByte (DataRateArray[count] , EEPROM_STARTUP_REGISTER) == 0 )
+       UART_Debug_PutString("SIISISISISISISISISISI");
+    CyDelay(10);
+    eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
+    CyDelay(10);
+    sprintf(message, "\n EEPROM DOPO : %x ", eeprom_value);
+	UART_Debug_PutString(message);  
+    */
     SearchCount (eeprom_value);
-
+    UpdateCTRL_REG1(eeprom_value);
     isr_BUTTON_StartEx(Custom_BUTTON_ISR); //Start the ISR of the button
     
     for(;;)
     {
         if (ButtonFlag)
         {
-            UpdateCTRL_REG1( DataRateArray[count]);
+                    ButtonFlag = 0;
+
+                    UpdateCTRL_REG1(DataRateArray[count]);
+                    
+                    UpdateEEPROM();
  
             if (error == NO_ERROR)
                 {
-                    EEPROM_UpdateTemperature();
-                    EEPROM_WriteByte(0x00, EEPROM_STARTUP_REGISTER); 
+                    UART_Debug_PutString("aggiornamento completo");
                     /*
+                    
+                    EEPROM_UpdateTemperature();
+                    EEPROM_WriteByte(DataRateArray[count], EEPROM_STARTUP_REGISTER);
+                    CyDelay(10);
+
+                    
                     uint8_t check = 3;
                     
                     sprintf(message, "\nCHECK : %u ", check);
@@ -159,17 +177,18 @@ int main(void)
                     if (check == CYRET_SUCCESS)
                         UART_Debug_PutString("write");
                         else UART_Debug_PutString("NOT write");
-                   */ eeprom_value=EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
-                     sprintf(message, "\nEEPROM DOPO : %x ", eeprom_value);
-		            UART_Debug_PutString(message);
                    
+                    eeprom_value=EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
+                    sprintf(message, "\n --EEPROM DOPO : %x ", EEPROM_ReadByte(EEPROM_STARTUP_REGISTER));
+		            UART_Debug_PutString(message);
+                   */
                 }
                 else
                 {
                     UART_Debug_PutString("Error occurred during I2C comm to update DataRate\r\n");   
-            }    
+                }   
 
-            ButtonFlag = 0;
+            
         }
         
         
@@ -180,7 +199,8 @@ int main(void)
         {
             if ((reg_value & STATUS_REG_ZYXDA_MASK) != 0)
             {
-                error = I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
+            
+               error = I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
                                                          OUT_X_L,
                                                          6,
                                                          AccelerationValues);                
@@ -188,7 +208,7 @@ int main(void)
                 if (error == NO_ERROR)
                 {
                  ConvertAcc(AccelerationValues);
-                 UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
+                UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
                 }
               else
                 {
@@ -199,7 +219,7 @@ int main(void)
         }
         else
         {
-            UART_Debug_PutString("Error occurred during I2C comm to read Status Register\r\n");   
+           UART_Debug_PutString("Error occurred during I2C comm to read Status Register\r\n");   
         }
         
     }

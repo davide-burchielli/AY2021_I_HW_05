@@ -12,7 +12,10 @@
 #define SENSITIVITY_G 1  // Sensitivity in mg/digit 
 #define SENSITIVITY_MS2 (SENSITIVITY_G * 9.806)/1024 // Sensitivity in m/s^2
 
+#define EEPROM_STARTUP_REGISTER 0x0000 // Define the Startup register address
+
     int16 MultiplierFactor = 1000;
+   
     uint8_t DataRateArray [DataRateArray_LENGTH] = {
                                                         0x10, // 0 0 0 1  0 0 0 0 --> 1 Hz
                                                         0x20, // 0 0 1 0  0 0 0 0 --> 10 Hz                                  
@@ -25,6 +28,7 @@
     uint8_t k = 0;
     uint8_t j = 0;
     int16 AccValuesConverted[3];
+    char messaggio[50] = {'\0'};
     
 
 void SearchCount (uint8_t eeprom_value)
@@ -39,6 +43,7 @@ ErrorCode SetRegister (uint8_t RegisterAddress, uint8_t RegisterValue)
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
                                             RegisterAddress,
                                             &reg_value);
+        
         if (reg_value != RegisterValue)
         {
             reg_value = RegisterValue;
@@ -51,7 +56,6 @@ ErrorCode SetRegister (uint8_t RegisterAddress, uint8_t RegisterValue)
 
 void UpdateCTRL_REG1(uint8_t DataRateToUpdate)
     {
-
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
                                             LIS3DH_CTRL_REG1,
                                             &reg_value);  
@@ -88,4 +92,14 @@ void ConvertAcc (uint8_t* AccelerationValues)
         j++;
     }
 }
+
+
+void UpdateEEPROM()
+{                      
+  EEPROM_UpdateTemperature();    
+  EEPROM_WriteByte (DataRateArray[count] , EEPROM_STARTUP_REGISTER);
+}
+
+
+
 /* [] END OF FILE */
