@@ -26,7 +26,6 @@
     uint8_t reg_value;
     float OutAccconv;
     uint8_t eeprom_value;
-    int16 OutAcc;
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];  // DataBuffer array contains the bytes to send.
     volatile _Bool ButtonFlag;
     

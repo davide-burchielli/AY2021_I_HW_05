@@ -16,6 +16,8 @@
 
 #define EEPROM_STARTUP_REGISTER 0x0000 // Define the Startup register address
 
+#define NUMBER_OF_REGISTERS 6
+
 
     /******************************************/
     /*            REGISTERS DEFINES           */
@@ -44,7 +46,7 @@
 
     #define LIS3DH_CTRL_REG4 0x23  //  Address of the Control register 4
 
-    #define LIS3DH_CTRL_REG4_VALUE 0x88 // Hex value of the Control register 4
+    #define LIS3DH_CTRL_REG4_VALUE 0x98 // Hex value of the Control register 4
 
     /*
         BDU | BLE | FS1 | FS0 | HR | ST1 | ST0 | SIM
@@ -74,13 +76,14 @@ int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
        
-    I2C_Peripheral_Start();
     UART_Debug_Start();
     EEPROM_Start();
-   
+    I2C_Peripheral_Start();   
+    
+    CyDelay(10);
     
     uint8_t AccelerationValues [6];
-    char message[20] = {'\0'};
+    
     extern uint8_t DataRateArray [DataRateArray_LENGTH];
     count = 0;
     reg_value=0;
@@ -96,132 +99,58 @@ int main(void)
     
 // CONTROL REGISTER 1:
     
-    UART_Debug_PutString("\r\nWriting CONTROL REGISTER 1:..\r\n");
     error = SetRegister(LIS3DH_CTRL_REG1, LIS3DH_CTRL_REG1_VALUE);
 
-    if (error == NO_ERROR)
-        {
-            sprintf(message, "CONTROL REGISTER 1 successfully written as: 0x%02X\r\n", LIS3DH_CTRL_REG1_VALUE);
-            UART_Debug_PutString(message); 
-        }
-        else
-        {
-            UART_Debug_PutString("Error occurred during I2C comm to set control register 1\r\n");   
-        }
-    
-    
+    if (error == ERROR)  
+        UART_Debug_PutString("ERROR : setting CONTROL REGISTER 1\r\n");   
+
 // CONTROL REGISTER 4:
     
-    UART_Debug_PutString("\r\nWriting CONTROL REGISTER 4:..\r\n");
     error = SetRegister(LIS3DH_CTRL_REG4, LIS3DH_CTRL_REG4_VALUE);
 
-    if (error == NO_ERROR)
-        {
-            sprintf(message, "CONTROL REGISTER 4 successfully written as: 0x%02X\r\n", LIS3DH_CTRL_REG4_VALUE);
-            UART_Debug_PutString(message); 
-        }
-        else
-        {
-            UART_Debug_PutString("Error occurred during I2C comm to set control register 4\r\n");   
-        }
-    
+    if (error == ERROR)  
+        UART_Debug_PutString("ERROR : setting CONTROL REGISTER 4 \r\n");  
 
 // READ the internal EEPROM StartUp register 
         
     eeprom_value = EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
-    //CyDelay(10);
-   // UpdateCTRL_REG1(eeprom_value);
-    
-    sprintf(message, "\n EEPROM START UP : %x ", eeprom_value);
-	UART_Debug_PutString(message);    
-    
-    /*
-    EEPROM_UpdateTemperature();
-    if (EEPROM_WriteByte (DataRateArray[count] , EEPROM_STARTUP_REGISTER) == 0 )
-       UART_Debug_PutString("SIISISISISISISISISISI");
-    CyDelay(10);
-    eeprom_value = EEPROM_ReadByte (EEPROM_STARTUP_REGISTER);
-    CyDelay(10);
-    sprintf(message, "\n EEPROM DOPO : %x ", eeprom_value);
-	UART_Debug_PutString(message);  
-    */
     SearchCount (eeprom_value);
     UpdateCTRL_REG1(eeprom_value);
+    
     isr_BUTTON_StartEx(Custom_BUTTON_ISR); //Start the ISR of the button
     
     for(;;)
     {
-        if (ButtonFlag)
+        if (ButtonFlag)  
         {
-                    ButtonFlag = 0;
-
-                    UpdateCTRL_REG1(DataRateArray[count]);
-                    
-                    UpdateEEPROM();
- 
-            if (error == NO_ERROR)
-                {
-                    UART_Debug_PutString("aggiornamento completo");
-                    /*
-                    
-                    EEPROM_UpdateTemperature();
-                    EEPROM_WriteByte(DataRateArray[count], EEPROM_STARTUP_REGISTER);
-                    CyDelay(10);
-
-                    
-                    uint8_t check = 3;
-                    
-                    sprintf(message, "\nCHECK : %u ", check);
-		            UART_Debug_PutString(message);           
-                    
-                    if (check == CYRET_SUCCESS)
-                        UART_Debug_PutString("write");
-                        else UART_Debug_PutString("NOT write");
-                   
-                    eeprom_value=EEPROM_ReadByte(EEPROM_STARTUP_REGISTER);
-                    sprintf(message, "\n --EEPROM DOPO : %x ", EEPROM_ReadByte(EEPROM_STARTUP_REGISTER));
-		            UART_Debug_PutString(message);
-                   */
-                }
-                else
-                {
-                    UART_Debug_PutString("Error occurred during I2C comm to update DataRate\r\n");   
-                }   
-
-            
+            ButtonFlag = 0;
+            UpdateEEPROM();
+            UpdateCTRL_REG1(DataRateArray[count]);
         }
-        
-        
+
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS,
                                             STATUS_REG,
                                             &reg_value);
-        if (error == NO_ERROR)
+        
+        if (error == ERROR)  
+            UART_Debug_PutString("ERROR : reading STATUS REGISTER \r\n"); 
+        else
         {
             if ((reg_value & STATUS_REG_ZYXDA_MASK) != 0)
             {
-            
-               error = I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
+                error = I2C_Peripheral_ReadRegisterMulti( LIS3DH_DEVICE_ADDRESS,
                                                          OUT_X_L,
-                                                         6,
+                                                         NUMBER_OF_REGISTERS,
                                                          AccelerationValues);                
-            
-                if (error == NO_ERROR)
-                {
-                 ConvertAcc(AccelerationValues);
-                UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
-                }
-              else
-                {
-                    UART_Debug_PutString("Error occurred during I2C comm to read OUTPUT REGISTERS\r\n");   
-                }                
-                
+                if (error == ERROR)  
+                    UART_Debug_PutString("ERROR : multiple reading OUTPUT REGISTERS \r\n"); 
+                else
+                    {
+                     ConvertAcc(AccelerationValues);
+                     UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
+                    }            
             }
         }
-        else
-        {
-           UART_Debug_PutString("Error occurred during I2C comm to read Status Register\r\n");   
-        }
-        
     }
 }
 
