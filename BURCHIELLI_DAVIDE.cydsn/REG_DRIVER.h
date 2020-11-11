@@ -15,14 +15,14 @@
 
     
    
-    void SearchCount (uint8_t eeprom_value);    
+    void SearchDRindex (uint8_t eeprom_value);    
     void UpdateCTRL_REG1(uint8_t DataRateToUpdate);
 
     ErrorCode SetRegister (uint8_t RegisterAddress, uint8_t RegisterValue);
     void ConvertAcc (uint8_t*);
     void UpdateEEPROM();
     
-    uint8_t count; 
+    uint8_t DRindex; 
     uint8_t reg_value;
     float OutAccconv;
     uint8_t eeprom_value;

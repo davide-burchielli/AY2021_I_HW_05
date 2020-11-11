@@ -29,12 +29,12 @@
                                                     };
   
 
-void SearchCount (uint8_t eeprom_value)
+void SearchDRindex (uint8_t eeprom_value)
     {
         for (k=0; k< DataRateArray_LENGTH; k++)
             if (DataRateArray[k] == eeprom_value)
                 { 
-                    count = k;
+                    DRindex = k;
                     break;
                 }
     }
@@ -96,7 +96,7 @@ void ConvertAcc (uint8_t* AccelerationValues)
 void UpdateEEPROM()
 {                      
   EEPROM_UpdateTemperature();    
-  EEPROM_WriteByte (DataRateArray[count] , EEPROM_STARTUP_REGISTER);
+  EEPROM_WriteByte (DataRateArray[DRindex] , EEPROM_STARTUP_REGISTER);
 }
 
 
