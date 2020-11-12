@@ -81,7 +81,7 @@
 
     #define STATUS_REG 0x27 // Address of the Status Register
    
-    #define STATUS_REG_ZYXDA_MASK 0x08  // Mask to check if STATUS_REG ZYXDA bit is = 1(X, Y and Z-axis new data available)
+    #define STATUS_REG_ZYXDA_MASK 0x08  // Mask used to check if STATUS_REG ZYXDA bit is = 1(X, Y and Z-axis new data available)
 
 int main(void)
 {
@@ -93,13 +93,16 @@ int main(void)
     
     CyDelay(10);
     
-    // Define variables:
-    
+    // Declare variables:
     uint8_t AccelerationValues [6];  // AccelerationValues array contains the values of the 6 OUTPUT REGISTERS.
     extern uint8_t DataRateArray [DataRateArray_LENGTH];  // Global variable
-    DRindex = 0;           // DRindex variable is used to keep track of the current DataRateArray index
-    reg_value=0;           // reg_value varaible is used to memorize a register value
-    eeprom_value = 0;      // eeprom_value varaible is used to memorize eeprom_value value
+    
+    // Initialize the variables:
+    DRindex = 0;           
+    reg_value = 0;
+    OutAccconv = 0;
+    eeprom_value = 0;      
+    ButtonFlag = 0;
   
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first DataBuffer array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last DataBuffer array element
@@ -150,9 +153,9 @@ int main(void)
         else
         {
             if ((reg_value & STATUS_REG_ZYXDA_MASK) != 0)  // If the STATUS_REG ZYXDA bit is = 1, new acceleration data 
-                                                           // are available, thus read the OUTPUT REGISTERS
+                                                           // are available, thus read OUTPUT REGISTERS
             {
-                // Read the 6 OUTPUT REGISTERS and same their values in AccelerationValues array
+                // Read the 6 OUTPUT REGISTERS and save their values in AccelerationValues array
                 error = I2C_Peripheral_ReadRegisterMulti( LIS3DH_DEVICE_ADDRESS,
                                                          OUT_X_L,
                                                          NUMBER_OF_REGISTERS,
@@ -162,7 +165,10 @@ int main(void)
                 else
                     {
                      ConvertAcc(AccelerationValues);  // Call ConvertAcc function to convert the read acceleration values
-                     UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);  // Send to Bridge Control Panel the 3 axis acceleration values
+                    
+                    // Send to Bridge Control Panel the HEADER byte + 3 axis acceleration values saved in 6 bytes + the TAIL byte
+                    // saved in DataBuffer array
+                     UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
                     }            
             }
         }

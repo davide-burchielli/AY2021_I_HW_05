@@ -1,7 +1,4 @@
 /**
-*   \file ErrorCodes.h
-*   \brief Error codes definition.
-*   
 *   This file contains several definition of error codes to be used throughout
 *   the project to be consisted with the written firmware.
 *
