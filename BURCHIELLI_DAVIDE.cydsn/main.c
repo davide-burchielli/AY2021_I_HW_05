@@ -1,7 +1,7 @@
 /* ===========================================================================================
     author: Davide Burchielli
    
-    The aim of this project is to test I2C bus protocol on  the LIS3DH 3- Axis Accelerometer.
+    The aim of this project is to test I2C bus protocol on the LIS3DH 3- Axis Accelerometer.
 
     This main.c file: 
     - starts the hardware components
@@ -62,7 +62,7 @@
         BDU = Block data update; set to 1, thus output registers are not updated until MSB and LSB reading;
         BLE = Big/little endian data selection; set to default value 0 : Data LSB @ lower address;
         FS[1:0] = Full-scale selection ; set to 01 : ±4 g since sperimentally, the acceleration values for fast
-                  movements of the accelerometer are > 2g.
+                  movements of the accelerometer are >(<) +(-)2g.
         HR = High-resolution output mode; set to 1 : high-resolution enabled;
         ST[1:0] = Self-test enable; set to 00 to disable it;
         SIM = SPI serial interface mode selection; set to default value 0; 
@@ -74,7 +74,7 @@
     // NOTE: since the 3 axes OUTPUT REGISTERS are one after the other, a MultiRead operation is executed, 
     //      thus it is needed just the first of the 6 registers : OUT_X_L
 
-    #define OUT_X_L 0x28 // Address of the X-axis LSB Output Register
+    #define OUT_X_L 0x28  // Address of the X-axis LSB Output Register
     #define NUMBER_OF_REGISTERS 6  // Number of OUTPUT REGISTERS to be read sequentially (2 for each axis)
     
 // STATUS REGISTER
@@ -87,7 +87,7 @@ int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
        
-    UART_Debug_Start();      // Starts the UART_Debag 
+    UART_Debug_Start();      // Starts the UART_Debug 
     EEPROM_Start();          // Starts the EEPROM 
     I2C_Peripheral_Start();  // Starts the I2C_Peripheral
     
@@ -103,7 +103,6 @@ int main(void)
     OutAccconv = 0;
     eeprom_value = 0;      
     ButtonFlag = 0;
-  
     DataBuffer[0] = 0xA0;  // Write the HEADER byte as the first DataBuffer array element
     DataBuffer[TRANSMIT_BUFFER_SIZE-1] = 0xC0; // Write the TAIL byte as the last DataBuffer array element
     
@@ -136,7 +135,7 @@ int main(void)
     
     for(;;)
     {
-        if (ButtonFlag)  // if Custom_BUTTON_ISR has been called
+        if (ButtonFlag)      // if Custom_BUTTON_ISR has been called
         {
             ButtonFlag = 0;  // Reset the flag
             UpdateEEPROM();  // Write on the EEPROM StartUp register the new Data Rate value
@@ -157,9 +156,9 @@ int main(void)
             {
                 // Read the 6 OUTPUT REGISTERS and save their values in AccelerationValues array
                 error = I2C_Peripheral_ReadRegisterMulti( LIS3DH_DEVICE_ADDRESS,
-                                                         OUT_X_L,
-                                                         NUMBER_OF_REGISTERS,
-                                                         AccelerationValues);                
+                                                          OUT_X_L,
+                                                          NUMBER_OF_REGISTERS,
+                                                          AccelerationValues);                
                 if (error == ERROR)  
                     UART_Debug_PutString("ERROR : multiple reading OUTPUT REGISTERS \r\n"); 
                 else
@@ -167,7 +166,7 @@ int main(void)
                      ConvertAcc(AccelerationValues);  // Call ConvertAcc function to convert the read acceleration values
                     
                     // Send to Bridge Control Panel the HEADER byte + 3 axis acceleration values saved in 6 bytes + the TAIL byte
-                    // saved in DataBuffer array
+                    // saved in DataBuffer array.
                      UART_Debug_PutArray(DataBuffer, TRANSMIT_BUFFER_SIZE);
                     }            
             }

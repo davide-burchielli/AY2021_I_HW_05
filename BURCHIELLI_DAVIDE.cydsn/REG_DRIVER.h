@@ -24,16 +24,14 @@
     void UpdateEEPROM();
     
     // Declares the variable:
-    uint8_t DRindex;        // DRindex variable is used to keep track of the current DataRateArray index
-    uint8_t reg_value;      // reg_value varaible is used to memorize a register value
-    float OutAccconv;       // OutAccconv is used during acceleration values convertions
-    uint8_t eeprom_value;   // eeprom_value varaible is used to memorize eeprom_value value
+    uint8_t DRindex;            // DRindex variable is used to keep track of the current DataRateArray index
+    uint8_t reg_value;          // reg_value varaible is used to memorize a register value
+    float OutAccconv;           // OutAccconv is used during acceleration values convertions
+    uint8_t eeprom_value;       // eeprom_value variable is used to memorize eeprom_value value
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];  // DataBuffer array contains the bytes to send.
-    volatile _Bool ButtonFlag;  //
+    volatile _Bool ButtonFlag;  // ButtonFlag variable is used to make main.c and Interrupt_Routines.c files communicate
     
 #endif
-
-
 
 
 /* [] END OF FILE */
